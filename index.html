@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGI Corp - Molecular Variations Database</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #005c00;
+        }
+        .canvas-container {
+            width: 100%;
+            height: 60vh;
+            position: relative;
+        }
+        .instruction-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-left: 4px solid var(--primary-color);
+        }
+        .series-btn {
+            transition: all 0.3s ease;
+        }
+        .series-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .molecule-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .molecule-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <img src="https://firebasestorage.googleapis.com/v0/b/widecanvas-d0dd4.appspot.com/o/additional-images%2FAGI%20Logo%20%20(simple).png?alt=media&token=7b164a84-34bc-45bc-9840-ff07b28c64f6" 
+                         alt="AGI Corp Logo" 
+                         class="h-8 w-auto">
+                    <span class="ml-2 text-xl font-semibold text-gray-900">AGI Corp</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Molecular Variations Database</h1>
+        <p class="text-gray-600 mb-8">Explore our molecular series and variations for ALS research</p>
+        
+        <div class="canvas-container mb-8 rounded-lg shadow-lg overflow-hidden bg-white">
+            <div id="3d-model" class="h-full w-full"></div>
+            <div id="molecule-loader" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <div class="loader"></div>
+                <p class="text-center mt-2 text-gray-600">Loading molecular model...</p>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-12 gap-6">
+            <div class="md:col-span-3">
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <h2 class="text-lg font-semibold mb-4 text-gray-900">Series Selection</h2>
+                    <div class="flex flex-col space-y-2">
+                        <button class="series-btn text-left px-4 py-2 rounded-md border-2 border-[#005c00] text-[#005c00] hover:bg-[#005c00] hover:text-white active" data-series="10">
+                            AGI-Series 10 - CBD
+                        </button>
+                        <button class="series-btn text-left px-4 py-2 rounded-md border-2 border-[#005c00] text-[#005c00] hover:bg-[#005c00] hover:text-white" data-series="11">
+                            AGI-Series 11 - Riluzole
+                        </button>
+                        <button class="series-btn text-left px-4 py-2 rounded-md border-2 border-[#005c00] text-[#005c00] hover:bg-[#005c00] hover:text-white" data-series="12">
+                            AGI-Series 12 - Edaravone
+                        </button>
+                        <button class="series-btn text-left px-4 py-2 rounded-md border-2 border-[#005c00] text-[#005c00] hover:bg-[#005c00] hover:text-white" data-series="13">
+                            AGI-Series 13 - Masitinib
+                        </button>
+                        <button class="series-btn text-left px-4 py-2 rounded-md border-2 border-[#005c00] text-[#005c00] hover:bg-[#005c00] hover:text-white" data-series="14">
+                            AGI-Series 14 - NP001
+                        </button>
+                        <button class="series-btn text-left px-4 py-2 rounded-md border-2 border-[#005c00] text-[#005c00] hover:bg-[#005c00] hover:text-white" data-series="15">
+                            AGI-Series 15 - Tirasemtiv
+                        </button>
+                        <button class="series-btn text-left px-4 py-2 rounded-md border-2 border-[#005c00] text-[#005c00] hover:bg-[#005c00] hover:text-white" data-series="16">
+                            AGI-Series 16 - Ceftriaxone
+                        </button>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <h3 class="text-md font-semibold mb-2 text-gray-900">Model Controls</h3>
+                        <div class="flex flex-col space-y-2">
+                            <button id="rotateBtn" class="bg-[#005c00] text-white px-4 py-2 rounded-lg hover:bg-[#004400] transition-colors flex items-center justify-center">
+                                <i class="bi bi-arrow-repeat mr-2"></i> Rotate Model
+                            </button>
+                            <button id="resetBtn" class="border-2 border-[#005c00] text-[#005c00] px-4 py-2 rounded-lg hover:bg-[#005c00] hover:text-white transition-colors flex items-center justify-center">
+                                <i class="bi bi-arrow-counterclockwise mr-2"></i> Reset View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-9">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 id="series-title" class="text-xl font-semibold text-gray-900">AGI-Series 10: Cannabidiol (CBD) Variations</h2>
+                        <div class="flex items-center">
+                            <span class="text-sm text-gray-500 mr-2">Source SMILES:</span>
+                            <code id="source-smiles" class="bg-gray-100 px-2 py-1 rounded text-xs">CC(C1=CC(=O)O)OCC(=O)C1</code>
+                        </div>
+                    </div>
+                    
+                    <div id="series-description" class="mb-6 p-4 bg-gray-50 rounded-lg">
+                        <p class="text-gray-700"><span class="font-semibold">Mechanism:</span> Cannabinoid receptor agonist, anti-inflammatory.</p>
+                        <p class="text-gray-700"><span class="font-semibold">Research:</span> CBD for ALS AGI</p>
+                    </div>
+                    
+                    <div id="variations-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Variations will be loaded here dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Define molecular data
+        const molecularSeries = {
+            10: {
+                title: "AGI-Series 10: Cannabidiol (CBD) Variations",
+                source: "CC(C1=CC(=O)O)OCC(=O)C1",
+                description: {
+                    mechanism: "Cannabinoid receptor agonist, anti-inflammatory.",
+                    research: "CBD for ALS AGI"
+                },
+                variations: [
+                    { id: "V1", smiles: "CC(C1=CC(=O)OC)OCC(=O)C1", description: "Replace hydroxyl group with methoxy group." },
+                    { id: "V2", smiles: "CC(C1=CC(=O)OCH3)OCC(=O)C1", description: "Add a methoxy group to the hydroxyl group." },
+                    { id: "V3", smiles: "CC(C1=CC(=O)OCH2CH3)OCC(=O)C1", description: "Replace hydroxyl group with ethoxy group." },
+                    { id: "V4", smiles: "CC(C1=CC(=O)ONH2)OCC(=O)C1", description: "Replace hydroxyl group with an amine group." },
+                    { id: "V5", smiles: "CC(C1=CC(=O)ON(CH3)2)OCC(=O)C1", description: "Replace hydroxyl group with dimethylamine group." },
+                    { id: "V6", smiles: "CC(C1=CC(=O)OCH2CF3)OCC(=O)C1", description: "Replace hydroxyl group with trifluoroethyl group." },
+                    { id: "V7", smiles: "CC(C1=CC(=O)O)OCC(=O)C1OCH3", description: "Add a methoxy group to the ester." },
+                    { id: "V8", smiles: "CC(C1=CC(=O)O)OCC(=O)C1Cl", description: "Replace hydroxyl group with chlorine." },
+                    { id: "V9", smiles: "CC(C1=CC(=O)O)OCC(=O)C1Br", description: "Replace hydroxyl group with bromine." },
+                    { id: "V10", smiles: "CC(C1=CC(=O)O)OCC(=O)C1I", description: "Replace hydroxyl group with iodine." },
+                    { id: "V11", smiles: "CC(C1=CC(=O)O)OCC(=O)C1OH", description: "Add a hydroxyl group to the ester." },
+                    { id: "V12", smiles: "CC(C1=CC(=O)O)OCC(=O)C1OCH2CH3", description: "Add an ethoxy group to the ester." }
+                ]
+            },
+            11: {
+                title: "AGI-Series 11: Riluzole Variations",
+                source: "CC1=NC(=C(C(=N1)Cl)S(=O)(=O)N)C",
+                description: {
+                    mechanism: "Glutamate antagonist, neuroprotective agent.",
+                    research: "Riluzole for ALS therapy"
+                },
+                variations: [
+                    { id: "V1", smiles: "CC1=NC(=C(C(=N1)F)S(=O)(=O)N)C", description: "Replace chlorine with fluorine." },
+                    { id: "V2", smiles: "CC1=NC(=C(C(=N1)Cl)S(=O)(=O)N)C(C)", description: "Add a methyl group to the benzene ring." },
+                    { id: "V3", smiles: "CC1=NC(=C(C(=N1)Cl)S(=O)(=O)N)CC", description: "Extend the alkyl chain with an ethyl group." },
+                    { id: "V4", smiles: "CF1=NC(=C(C(=N1)Cl)S(=O)(=O)N)C", description: "Replace the methyl group with a fluorine." },
+                    { id: "V5", smiles: "CC1=NC(=C(C(=N1)Br)S(=O)(=O)N)C", description: "Replace chlorine with bromine." },
+                    { id: "V6", smiles: "CC1=NC(=C(C(=N1)Cl)S(=O)(=O)N)C(Cl)", description: "Add a chlorine atom to the methyl group." },
+                    { id: "V7", smiles: "CCl1=NC(=C(C(=N1)Cl)S(=O)(=O)N)C", description: "Replace methyl with chlorine." },
+                    { id: "V8", smiles: "CC1=NC(=C(C(=N1)F)S(=O)(=O)N)C", description: "Replace chlorine with fluorine." },
+                    { id: "V9", smiles: "C(C)(C)1=NC(=C(C(=N1)Cl)S(=O)(=O)N)C", description: "Add an additional methyl group." },
+                    { id: "V10", smiles: "CC1=NC(=C(C(=N1)Cl)S(=O)(=O)N)CC", description: "Replace methyl with ethyl." }
+                ]
+            },
+            12: {
+                title: "AGI-Series 12: Edaravone Variations",
+                source: "CC1=CC(=O)N(C(=O)N1)C",
+                description: {
+                    mechanism: "Free radical scavenger, antioxidant effects.",
+                    research: "Edaravone for oxidative stress in ALS"
+                },
+                variations: [
+                    { id: "V1", smiles: "CC1=CC(=O)N(C(=O)N1)CC", description: "Replace methyl with ethyl group." },
+                    { id: "V2", smiles: "CC1=CC(=S)N(C(=S)N1)C", description: "Replace oxygen with sulfur in the carbonyl group." },
+                    { id: "V3", smiles: "CC1=CC(=O)N(C(=O)N1)OC", description: "Add a methoxy group." },
+                    { id: "V4", smiles: "CC1=CC(=O)N(C(=O)N1)C(Cl)", description: "Add a chlorine atom to the alkyl chain." },
+                    { id: "V5", smiles: "CC1=CC(=O)N(C(=O)N1)C(CF3)", description: "Replace methyl with trifluoromethyl group." },
+                    { id: "V6", smiles: "C(C)(C)1=CC(=O)N(C(=O)N1)C", description: "Add an additional methyl group to the benzene ring." },
+                    { id: "V7", smiles: "CC1=CC(=S)N(C(=O)N1)C", description: "Replace carbonyl oxygen with sulfur." },
+                    { id: "V8", smiles: "CC1=CC(=O)N(C(=O)N1)CF3", description: "Replace methyl with trifluoromethyl group." },
+                    { id: "V9", smiles: "CC1=CC(=O)N(C(=O)N1)OCH3", description: "Add a methoxy group." },
+                    { id: "V10", smiles: "CF1=CC(=O)N(C(=O)N1)C", description: "Replace one of the carbonyl oxygen atoms with fluorine." }
+                ]
+            },
+            13: {
+                title: "AGI-Series 13: Masitinib Variations",
+                source: "CC1=NC(=C(C(=N1)N)N(C)C2=CC(=C(C=C2)Cl)Cl)Cl",
+                description: {
+                    mechanism: "Tyrosine kinase inhibitor, anti-inflammatory.",
+                    research: "Masitinib for neuroinflammation in ALS"
+                },
+                variations: [
+                    { id: "V1", smiles: "CC1=NC(=C(C(=N1)N)N(C)C2=CC(=C(C=C2)F)Cl)Cl", description: "Replace one chlorine with fluorine." },
+                    { id: "V2", smiles: "CC1=NC(=C(C(=N1)N)N(C)C2=CC(=C(C=C2)Br)Cl)Cl", description: "Replace one chlorine with bromine." },
+                    { id: "V3", smiles: "CC1=NC(=C(C(=N1)N)N(C)C2=CC(=C(C=C2)Cl)Cl)OH", description: "Add a hydroxyl group." },
+                    { id: "V4", smiles: "CC1=NC(=C(C(=N1)N)N(C)C2=CC(=C(C=C2)Cl)Cl)OCH3", description: "Add a methoxy group." },
+                    { id: "V5", smiles: "CC1=NC(=C(C(=N1)N)N(C)C2=CC(=C(C=C2)Cl)Cl)C(C)", description: "Add a methyl group to the aromatic ring." },
+                    { id: "V6", smiles: "CC1=NC(=C(C(=N1)N)N(C)C2=CC(=C(C=C2)F)Cl)Br", description: "Replace one chlorine with bromine." },
+                    { id: "V7", smiles: "CC1=NC(=C(C(=N1)N)N(C)C2=CC(=C(C=C2)Cl)Br)Cl", description: "Replace fluorine with bromine." },
+                    { id: "V8", smiles: "CC1=NC(=C(C(=N1)N)N(C)C2=CC(=C(C=C2)Cl)Cl)F", description: "Replace one chlorine with fluorine." },
+                    { id: "V9", smiles: "CC1=NC(=C(C(=N1)N)N(C)C2=CC(=C(C=C2)F)Cl)F", description: "Replace two chlorines with fluorine." },
+                    { id: "V10", smiles: "CC1=NC(=C(C(=N1)N)N(C)C2=CC(=C(C=C2)Cl)Cl)OCH3", description: "Add a methoxy group." }
+                ]
+            },
+            14: {
+                title: "AGI-Series 14: NP001 Variations",
+                source: "O=ClO",
+                description: {
+                    mechanism: "Macrophage regulator, anti-inflammatory.",
+                    research: "NP001 for neuroinflammation in ALS"
+                },
+                variations: [
+                    { id: "V1", smiles: "S=ClO", description: "Replace oxygen with sulfur." },
+                    { id: "V2", smiles: "O=ClOH", description: "Add a hydroxyl group." },
+                    { id: "V3", smiles: "O=SClO", description: "Replace oxygen with sulfur and add an additional sulfur group." },
+                    { id: "V4", smiles: "O=BrO", description: "Replace chlorine with bromine." },
+                    { id: "V5", smiles: "O=IO", description: "Replace chlorine with iodine." }
+                ]
+            },
+            15: {
+                title: "AGI-Series 15: Tirasemtiv Variations",
+                source: "CC(C)N1C(=O)N(C2=CC=CC=C2)C(N1)=N",
+                description: {
+                    mechanism: "Fast skeletal muscle troponin activator.",
+                    research: "Tirasemtiv for muscle weakness in ALS"
+                },
+                variations: [
+                    { id: "V1", smiles: "C(C)(C)N1C(=O)N(C2=CC=CC=C2)C(N1)=N", description: "Replace isopropyl with tert-butyl." },
+                    { id: "V2", smiles: "CC(C)N1C(=O)N(C2=NC=CC=C2)C(N1)=N", description: "Replace benzene with pyridine." },
+                    { id: "V3", smiles: "CC(C)N1C(=O)N(C2=CC=CC=C2)C(O1)=N", description: "Replace nitrogen with oxygen in the ring." },
+                    { id: "V4", smiles: "CC(C)N1C(=O)N(C2=CC=CC=C2)C(OH1)=N", description: "Add a hydroxyl group." },
+                    { id: "V5", smiles: "CC(C)N1C(=O)N(C2=CC=CC=C2)C(N1)=N(Cl)", description: "Add a chlorine atom to the nitrogen." }
+                ]
+            },
+            16: {
+                title: "AGI-Series 16: Ceftriaxone Variations",
+                source: "C1CC(=O)N(C1=O)C2=CC(=NO2)C3=NC(=O)N(C(=O)N3CC4=CC=CC=C4)C5=CC=CC=C5",
+                description: {
+                    mechanism: "Beta-lactam antibiotic, glutamate transporter upregulator.",
+                    research: "Ceftriaxone for glutamate excitotoxicity in ALS"
+                },
+                variations: [
+                    { id: "V1", smiles: "C1CC(=O)N(C1=O)C2=CC(=NO2)C3=NC(=O)N(C(=O)N3CC4=CC=CC=C4)C5=CC=CC=CO", description: "Replace oxime with hydroxyl group." },
+                    { id: "V2", smiles: "C1CC(=O)N(C1=O)C2=CC(=NO2)C3=NC(=O)N(C(=O)N3CC4=CC=CC=C4)C5=CC=CC=OMe", description: "Add a methoxy group." },
+                    { id: "V3", smiles: "C1CC(=O)N(C1=O)C2=CC(=NO2)C3=NC(=O)N(C(=O)N3CC4=CC=CC=C4)C5=CC=CC=Cl", description: "Add a chlorine atom to the phenyl ring." },
+                    { id: "V4", smiles: "C1CC(=O)N(C1=O)C2=CC(=NO2)C3=NC(=O)N(C(=O)N3CC4=CC=CC=C4)C5=CC=CC=F", description: "Add a fluorine atom to the phenyl ring." },
+                    { id: "V5", smiles: "C1CC(=O)N(C1=O)C2=CC(=NO2)C3=NC(=O)N(C(=O)N3CC4=CC=CC=C4)C5=CC=CC=Br", description: "Add a bromine atom to the phenyl ring." }
+                ]
+            }
+        };
+        
+        let scene, camera, renderer, controls;
+        let currentMoleculeGroup, currentRotation = { x: 0, y: 0, z: 0 };
+        let currentSeries = 10;
+        
+        // Initialize 3D scene
+        function init3DScene() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, 
+                document.querySelector('.canvas-container').offsetWidth / 
+                document.querySelector('.canvas-container').offsetHeight, 
+                0.1, 1000);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(
+                document.querySelector('.canvas-container').offsetWidth, 
+                document.querySelector('.canvas-container').offsetHeight
+            );
+            renderer.setClearColor(0xffffff);
+            document.getElementById('3d-model').appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
+
+            const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
+            directionalLight2.position.set(-5, -5, -5);
+            scene.add(directionalLight2);
+
+            camera.position.z = 5;
+            camera.position.y = 3;
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Initial molecule
+            createMoleculeModel("CC(C1=CC(=O)O)OCC(=O)C1");
+            
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            
+            // Apply any ongoing rotation
+            if (currentMoleculeGroup) {
+                currentMoleculeGroup.rotation.x += currentRotation.x;
+                currentMoleculeGroup.rotation.y += currentRotation.y;
+                currentMoleculeGroup.rotation.z += currentRotation.z;
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            const container = document.querySelector('.canvas-container');
+            camera.aspect = container.offsetWidth / container.offsetHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.offsetWidth, container.offsetHeight);
+        }
+
+        window.addEventListener('resize', onWindowResize, false);
+        
+        // Function to create a stylized molecule based on SMILES
+        function createMoleculeModel(smiles) {
+            // Show loader
+            document.getElementById('molecule-loader').style.display = 'block';
+            
+            // Remove previous molecule if exists
+            if (currentMoleculeGroup) {
+                scene.remove(currentMoleculeGroup);
+            }
+            
+            currentMoleculeGroup = new THREE.Group();
+            
+            // Parse the SMILES string to create a basic visualization
+            // This is a simplified representation - a real implementation would use a chemistry library
+            const atomColors = {
+                'C': 0x555555, // Carbon - gray
+                'O': 0xff0000, // Oxygen - red
+                'N': 0x0000ff, // Nitrogen - blue
+                'S': 0xffff00, // Sulfur - yellow
+                'F': 0x00ff00, // Fluorine - green
+                'Cl': 0x00ff00, // Chlorine - green
+                'Br': 0xa52a2a, // Bromine - brown
+                'I': 0x800080,  // Iodine - purple
+                'H': 0xffffff   // Hydrogen - white
+            };
+            
+            // Create a simplified molecular structure
+            const positions = [];
+            const numAtoms = Math.min(20, smiles.length); // Limit to 20 atoms for simplicity
+            
+            for (let i = 0; i < numAtoms; i++) {
+                let x, y, z;
+                
+                // Create a somewhat meaningful arrangement based on the SMILES
+                const angle = (i / numAtoms) * Math.PI * 2;
+                const radius = 1.5 + Math.sin(i * 0.5) * 0.5;
+                
+                if (smiles[i] === '=' || smiles[i] === '(' || smiles[i] === ')') {
+                    continue; // Skip bond symbols
+                }
+                
+                x = Math.cos(angle) * radius;
+                y = Math.sin(angle) * radius + Math.sin(i * 0.7) * 0.5;
+                z = Math.sin(i * 0.5) * 0.8;
+                
+                positions.push({ x, y, z });
+                
+                // Determine atom type and color
+                let atomType = smiles[i];
+                if (i + 1 < smiles.length && /[a-z]/.test(smiles[i+1])) {
+                    atomType += smiles[i+1]; // Handle two-letter elements like Cl, Br
+                }
+                
+                let atomColor = atomColors[atomType] || 0x555555; // Default to carbon gray
+                
+                // Create atom sphere
+                const atomGeometry = new THREE.SphereGeometry(0.25, 32, 32);
+                const atomMaterial = new THREE.MeshPhongMaterial({ color: atomColor });
+                const atom = new THREE.Mesh(atomGeometry, atomMaterial);
+                atom.position.set(x, y, z);
+                currentMoleculeGroup.add(atom);
+                
+                // Add bonds to previous atoms (simplified)
+                if (i > 0) {
+                    for (let j = 0; j < i; j++) {
+                        // Only create bonds between atoms that are close enough
+                        const dist = Math.sqrt(
+                            Math.pow(positions[i].x - positions[j].x, 2) +
+                            Math.pow(positions[i].y - positions[j].y, 2) +
+                            Math.pow(positions[i].z - positions[j].z, 2)
+                        );
+                        
+                        if (dist < 1.2) {
+                            const bondGeometry = new THREE.CylinderGeometry(0.05, 0.05, dist, 8);
+                            const bondMaterial = new THREE.MeshPhongMaterial({ color: 0xcccccc });
+                            const bond = new THREE.Mesh(bondGeometry, bondMaterial);
+                            
+                            // Position and rotate bond to connect atoms
+                            const midpoint = {
+                                x: (positions[i].x + positions[j].x) / 2,
+                                y: (positions[i].y + positions[j].y) / 2,
+                                z: (positions[i].z + positions[j].z) / 2
+                            };
+                            
+                            bond.position.set(midpoint.x, midpoint.y, midpoint.z);
+                            
+                            // Orient the bond
+                            const direction = new THREE.Vector3(
+                                positions[i].x - positions[j].x,
+                                positions[i].y - positions[j].y,
+                                positions[i].z - positions[j].z
+                            );
+                            const up = new THREE.Vector3(0, 1, 0);
+                            bond.quaternion.setFromUnitVectors(up, direction.normalize());
+                            
+                            currentMoleculeGroup.add(bond);
+                        }
+                    }
+                }
+            }
+            
+            scene.add(currentMoleculeGroup);
+            
+            // Hide loader after brief delay
+            setTimeout(() => {
+                document.getElementById('molecule-loader').style.display = 'none';
+            }, 800);
+        }
+        
+        // Function to load series data
+        function loadSeries(seriesId) {
+            currentSeries = seriesId;
+            const series = molecularSeries[seriesId];
+            
+            // Update title and source SMILES
+            document.getElementById('series-title').textContent = series.title;
+            document.getElementById('source-smiles').textContent = series.source;
+            
+            // Update description
+            const descriptionEl = document.getElementById('series-description');
+            descriptionEl.innerHTML = `
+                <p class="text-gray-700"><span class="font-semibold">Mechanism:</span> ${series.description.mechanism}</p>
+                <p class="text-gray-700"><span class="font-semibold">Research:</span> ${series.description.research}</p>
+            `;
+            
+            // Create variation cards
+            const variationsGrid = document.getElementById('variations-grid');
+            variationsGrid.innerHTML = '';
+            
+            // Load source molecule first
+            createMoleculeModel(series.source);
+            
+            // Create cards for each variation
+            series.variations.forEach(variation => {
+                const card = document.createElement('div');
+                card.className = 'molecule-card bg-white rounded-lg shadow-sm p-4 border-l-4 border-[#005c00]';
+                card.dataset.smiles = variation.smiles;
+                
+                card.innerHTML = `
+                    <h3 class="text-md font-semibold text-gray-900">${series.title.split(':')[0]}: ${variation.id}</h3>
+                    <p class="text-sm text-gray-600 mt-1 mb-2">${variation.description}</p>
+                    <div class="text-xs bg-gray-50 p-2 rounded overflow-auto">
+                        <code>${variation.smiles}</code>
+                    </div>
+                    <button class="mt-3 text-[#005c00] text-sm hover:underline flex items-center">
+                        <i class="bi bi-arrow-up-right-square mr-1"></i> View Model
+                    </button>
+                `;
+                
+                card.addEventListener('click', () => {
+                    // Update 3D visualization
+                    createMoleculeModel(variation.smiles);
+                    
+                    // Highlight active card
+                    document.querySelectorAll('.molecule-card').forEach(c => {
+                        c.classList.remove('bg-gray-50');
+                        c.classList.add('bg-white');
+                    });
+                    card.classList.remove('bg-white');
+                    card.classList.add('bg-gray-50');
+                });
+                
+                variationsGrid.appendChild(card);
+            });
+        }
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            init3DScene();
+            loadSeries(10); // Start with series 10
+            
+            // Series selection event listeners
+            document.querySelectorAll('.series-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const seriesId = parseInt(btn.dataset.series);
+                    
+                    // Update active button
+                    document.querySelectorAll('.series-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    btn.classList.add('active');
+                    
+                    // Load series data
+                    loadSeries(seriesId);
+                    
+                    // Reset rotation and view
+                    currentRotation = { x: 0, y: 0, z: 0 };
+                    if (currentMoleculeGroup) {
+                        currentMoleculeGroup.rotation.set(0, 0, 0);
+                    }
+                    camera.position.set(0, 3, 5);
+                    controls.reset();
+                });
+            });
+            
+            // Rotation button event listener
+            document.getElementById('rotateBtn').addEventListener('click', () => {
+                // Toggle rotation
+                if (currentRotation.y === 0) {
+                    currentRotation = { x: 0, y: 0.01, z: 0 };
+                } else {
+                    currentRotation = { x: 0, y: 0, z: 0 };
+                }
+            });
+            
+            // Reset button event listener
+            document.getElementById('resetBtn').addEventListener('click', () => {
+                currentRotation = { x: 0, y: 0, z: 0 };
+                if (currentMoleculeGroup) {
+                    currentMoleculeGroup.rotation.set(0, 0, 0);
+                }
+                camera.position.set(0, 3, 5);
+                controls.reset();
+            });
+        });
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
